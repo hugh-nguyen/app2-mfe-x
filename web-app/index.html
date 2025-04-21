@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Path Getter X</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            background-color: #e05731;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            background-color: #e05731;
+        }
+        
+        button:active {
+            transform: translateY(2px);
+        }
+        
+        #result {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+            min-height: 30px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #4CAF50;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page loaded, fetching headers...");
+            fetchCurrentPageHeaders();
+        });
+
+        function fetchCurrentPageHeaders() {
+            const cookieObj = {};
+            document.cookie.split(';').forEach(cookie => {
+                const parts = cookie.trim().split('=');
+                if (parts.length >= 2) {
+                    const key = parts[0];
+                    const value = parts.slice(1).join('=');
+                    cookieObj[key] = value;
+                }
+            });
+            
+            const appVersion = cookieObj['X-App-Version'];
+            const appName = cookieObj['X-App-Name'];
+            
+            console.log("All cookies:", cookieObj);
+            console.log("Current page headers from cookies:", {
+                'X-App-Version': appVersion,
+                'X-App-Name': appName
+            });
+            
+            window.pageHeaders = {
+                'X-App-Version': appVersion,
+                'X-App-Name': appName
+            };
+        }
+
+        async function fetchResult() {
+            const resultEl = document.getElementById("result");
+            resultEl.innerHTML = '<div class="loading"></div> Fetching result...';
+
+            const subdomain = "k8s-eksingressgroup-e31e0db899-864799364";
+            const domain = "ap-southeast-2.elb.amazonaws.com"
+            const url = `http://${subdomain}.${domain}/app2/service-y/getresult/`
+
+            try {
+                const headers = {};
+                if (window.pageHeaders) {
+                    if (window.pageHeaders['X-App-Version']) 
+                        headers['X-App-Version'] = window.pageHeaders['X-App-Version'];
+                    if (window.pageHeaders['X-App-Name']) 
+                        headers['X-App-Name'] = window.pageHeaders['X-App-Name'];
+                }
+
+                console.log("Forwarding headers to service-y:", headers);
+
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: headers
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                resultEl.innerHTML = `<strong>Result:</strong> ${JSON.stringify(data)}`;
+            } catch (error) {
+                console.error("Error:", error);
+                resultEl.innerHTML = `<strong>Error:</strong> ${error.message || "Unable to reach the server."}`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2>This is App 2 MFE X!!!</h2>
+    
+    <button onclick="fetchResult()">Get Path!!</button>
+    
+    <div id="result">
+        <!-- Result will be displayed here -->
+    </div>
+    <div style="margin-top: 32px">Version 0.0.1</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+application-name: app2
+service-name: mfe-x
+service-dependencies:
+- app: app2
+  svc: service-y
+  ver: 0.0.2
